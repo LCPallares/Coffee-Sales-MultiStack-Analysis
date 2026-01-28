@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
+import os
 
 # --- CONFIGURACIÓN Y ESTILO ---
 st.set_page_config(page_title="Coffee Shop Sales Analysis", layout="wide")
