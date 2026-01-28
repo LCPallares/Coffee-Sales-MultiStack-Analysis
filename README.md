@@ -80,6 +80,8 @@ CALCULATE(
 | PowerBI | ![powerbi](assets/screenshots/coffee_shop_sales-images-0.jpg) | ![powerbi](assets/screenshots/coffee_shop_sales-images-1.jpg) | ![powerbi](assets/screenshots/coffee_shop_sales-images-2.jpg) |
 |         |                                                               |                                                               |                                                               |
 
+url streamlit cloud: https://lcpallares-coffee-sales-multistac-streamlit-dashboardapp-mzdsea.streamlit.app/
+
 ---
 
 ## ✒️ Autor
