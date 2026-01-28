@@ -388,6 +388,56 @@ def analisis_categoria_precio_qty(df_filtered):
     
     st.plotly_chart(fig, use_container_width=True)
 
+def analisis_categoria_precio_qty_cuadrantes(df_filtered):
+    st.subheader("Matriz de Análisis: Precio vs Volumen por Categoría")
+    
+    # 1. Agrupamos por categoría para obtener los promedios
+    cat_analisis = df_filtered.groupby('product_category').agg({
+        'unit_price': 'mean',
+        'transaction_qty': 'mean',
+        'Total_Bill': 'sum'
+    }).reset_index()
+
+    # 2. Calculamos los promedios globales para las líneas de los cuadrantes
+    avg_price = cat_analisis['unit_price'].mean()
+    avg_qty = cat_analisis['transaction_qty'].mean()
+
+    # 3. Creamos el Scatter Plot
+    fig = px.scatter(
+        cat_analisis, 
+        x='unit_price', 
+        y='transaction_qty',
+        size='Total_Bill',
+        color='product_category',
+        hover_name='product_category',
+        text='product_category', # Añade el nombre al lado de la burbuja
+        labels={
+            'unit_price': 'Precio Unitario Promedio ($)',
+            'transaction_qty': 'Cant. Promedio por Transacción'
+        },
+        color_discrete_sequence=px.colors.qualitative.Antique
+    )
+
+    # 4. Añadimos las líneas de los cuadrantes
+    fig.add_vline(x=avg_price, line_dash="dash", line_color="#3d2b1f", opacity=0.5)
+    fig.add_hline(y=avg_qty, line_dash="dash", line_color="#3d2b1f", opacity=0.5)
+
+    # 5. Estilo y anotaciones para los cuadrantes
+    fig.update_traces(textposition='top center')
+    fig.update_layout(
+        height=600,
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False # Ocultamos leyenda porque ya pusimos texto en las burbujas
+    )
+    
+    # Añadimos etiquetas a los cuadrantes (opcional pero muy útil)
+    fig.add_annotation(x=cat_analisis['unit_price'].max(), y=cat_analisis['transaction_qty'].max(),
+                text="Premium / High Volume", showarrow=False, opacity=0.3)
+    fig.add_annotation(x=cat_analisis['unit_price'].min(), y=cat_analisis['transaction_qty'].min(),
+                text="Underperformers", showarrow=False, opacity=0.3)
+
+    st.plotly_chart(fig, use_container_width=True)
+
 def ventas_por_dia_semana(df_filtered):
     st.subheader("Ventas por Día de la Semana")
     
@@ -476,7 +526,8 @@ elif pagina == "Shopper Behavior":
         analisis_precio_transacciones(df_filtered)
     with col_b:
         #ventas_por_dia_semana(df_filtered)
-        analisis_categoria_precio_qty(df_filtered)
+        #analisis_categoria_precio_qty(df_filtered)
+        analisis_categoria_precio_qty_cuadrantes(df_filtered)
 
     st.markdown("---")
     top_productos_barra(df_filtered)
