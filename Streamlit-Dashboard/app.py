@@ -213,7 +213,6 @@ def tabla_resumen(df_filtered):
 
 def mapa_calor_horarios(df_filtered):
     st.subheader("Patrón de Tráfico: Horas vs. Días de la Semana")
-    st.subheader(f"hora: {df_filtered['Hour']}")
     
     # 1. Preparar los datos: Tabla pivote
     # Ordenamos los días para que no salgan alfabéticos
@@ -264,6 +263,65 @@ def top_productos_barra(df_filtered):
     
     st.plotly_chart(fig_top, use_container_width=True)
 
+def analisis_precio_transacciones(df_filtered):
+    st.subheader("Efecto del Precio Unitario en el Volumen")
+    
+    # 1. Agrupamos por precio unitario para contar transacciones
+    precio_analisis = df_filtered.groupby('unit_price').agg({
+        'transaction_id': 'nunique',
+        'transaction_qty': 'sum'
+    }).reset_index()
+
+    # 2. Creamos el gráfico de dispersión (Scatter Plot)
+    fig = px.scatter(
+        precio_analisis, 
+        x='unit_price', 
+        y='transaction_id',
+        size='transaction_qty', # El tamaño del punto indica el volumen total
+        hover_name='unit_price',
+        color_discrete_sequence=['#59270E'],
+        labels={
+            'unit_price': 'Precio Unitario ($)',
+            'transaction_id': 'Número de Transacciones'
+        },
+        template="simple_white"
+    )
+
+    # Añadimos una línea de tendencia sutil (opcional)
+    # fig.add_trace(go.Scatter(x=precio_analisis['unit_price'], y=...)) 
+
+    fig.update_layout(
+        height=450,
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+def ventas_por_dia_semana(df_filtered):
+    st.subheader("Ventas por Día de la Semana")
+    
+    orden_dias = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    
+    # Agrupamos y reordenamos
+    dia_semana = df_filtered.groupby('Day Name')['Total_Bill'].sum().reindex(orden_dias).reset_index()
+    promedio = dia_semana['Total_Bill'].mean()
+    
+    # Color condicional: Café oscuro si supera el promedio
+    colores = ['#59270E' if x >= promedio else '#c3a689' for x in dia_semana['Total_Bill']]
+    
+    fig = px.bar(
+        dia_semana, 
+        x='Day Name', 
+        y='Total_Bill',
+        color_discrete_sequence=colores,
+        template="simple_white"
+    )
+    
+    fig.update_traces(marker_color=colores)
+    fig.add_hline(y=promedio, line_dash="dot", line_color="#3d2b1f", annotation_text="Promedio")
+    
+    st.plotly_chart(fig, use_container_width=True)
+
 
 # --- NAVEGACIÓN Y FILTROS ---
 pagina = st.sidebar.radio("Navegación:", ["Overview", "Monthly Sales", "Shopper Behavior"])
@@ -312,12 +370,20 @@ elif pagina == "Monthly Sales":
 elif pagina == "Shopper Behavior":
     st.title("👥 Comportamiento del Consumidor")
     
-    # KPIs Rápidos (siempre útiles)
     metricas_kpi(df_filtered)
     st.markdown("---")
     
-    # El Heatmap ocupa el ancho total
+    # Fila 1: Heatmap (Ancho completo)
     mapa_calor_horarios(df_filtered)
     
-    # Fila adicional: Productos más vendidos en esta selección
+    st.markdown("---")
+    
+    # Fila 2: Análisis de Precio y Días de la semana
+    col_a, col_b = st.columns(2)
+    with col_a:
+        analisis_precio_transacciones(df_filtered)
+    with col_b:
+        ventas_por_dia_semana(df_filtered)
+
+    st.markdown("---")
     top_productos_barra(df_filtered)
