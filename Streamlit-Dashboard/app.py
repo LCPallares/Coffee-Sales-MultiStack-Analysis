@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
 
 # --- CONFIGURACIÓN Y ESTILO ---
 st.set_page_config(page_title="Coffee Shop Sales Analysis", layout="wide")
@@ -486,9 +487,117 @@ def ventas_por_dia_semana(df_filtered):
     
     st.plotly_chart(fig, use_container_width=True)
 
+def distribucion_ventas_tiempo(df):
+    st.subheader("Distribución de Ventas por Tienda en el Tiempo")
+    st.markdown("Visualización de la intensidad de ventas desde Enero a Junio")
+
+    # 1. Agrupamos por fecha y tienda para tener el total diario
+    df_temporal = df.groupby(['transaction_date', 'store_location'])['Total_Bill'].sum().reset_index()
+
+    # 2. Crear el gráfico de áreas (Ridgeline effect)
+    # Usamos px.area para que se vea la "distribución" de la masa de ventas
+    fig = px.area(
+        df_temporal, 
+        x="transaction_date", 
+        y="Total_Bill", 
+        color="store_location",
+        line_group="store_location",
+        color_discrete_sequence=['#3d2b1f', '#6f4e37', '#c3a689'],
+        labels={'transaction_date': 'Fecha', 'Total_Bill': 'Ventas Diarias ($)'},
+        template="simple_white"
+    )
+
+    fig.update_layout(
+        height=500,
+        hovermode="x unified",
+        plot_bgcolor='rgba(0,0,0,0)',
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+def distribucion_avanzada_tiendas(df):
+    st.subheader("Análisis de Densidad: ¿Cuándo se vende más en el mes?")
+    st.markdown("Este gráfico muestra la 'masa' de ventas. Las curvas más altas indican los días de mayor actividad.")
+
+    tiendas = df['store_location'].unique()
+    
+    # Preparamos los datos: El día del mes para cada transacción de cada tienda
+    # Usamos el valor del día repetido según el monto de la venta para dar peso
+    hist_data = []
+    group_labels = []
+
+    for tienda in tiendas:
+        # Extraemos los días donde hubo ventas para esa tienda
+        dias_tienda = df[df['store_location'] == tienda]['Day']
+        hist_data.append(dias_tienda)
+        group_labels.append(tienda)
+
+    # Crear el Distplot (Histograma + Curva suave)
+    # bin_size=1 porque los días van de 1 en 1
+    fig = ff.create_distplot(
+        hist_data, 
+        group_labels, 
+        bin_size=1,
+        show_hist=False, # Si prefieres solo las curvas elegantes, ponlo en False
+        colors=['#3d2b1f', '#6f4e37', '#c3a689']
+    )
+
+    fig.update_layout(
+        title_text='Curvas de Densidad de Ventas por Tienda (Días 1-31)',
+        xaxis_title="Día del Mes",
+        yaxis_title="Densidad de Transacciones",
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=500,
+        template="simple_white"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+import plotly.figure_factory as ff
+
+def distribucion_avanzada_estilo_oscuro(df):
+    st.subheader("Gráficos Avanzados: Histograma Múltiple")
+    
+    # 1. Preparar los datos
+    # Filtramos por tienda y obtenemos los valores de venta (Total_Bill)
+    tiendas = df['store_location'].unique()
+    
+    # Creamos una lista de arrays con los datos de cada tienda
+    hist_data = [df[df['store_location'] == loc]['Total_Bill'].dropna() for loc in tiendas]
+    group_labels = list(tiendas)
+
+    # 2. Definir los colores exactos de tu imagen (Verde, Naranja, Azul)
+    colores_vivos = ['#2ca02c', '#ff7f0e', '#1f77b4'] 
+
+    # 3. Crear el distplot
+    # bin_size: ajusta el ancho de las barras (0.5 o 1 suele funcionar bien para tickets de café)
+    fig = ff.create_distplot(
+        hist_data, 
+        group_labels, 
+        bin_size=.5,
+        colors=colores_vivos,
+        curve_type='kde', # 'kde' para la línea suave
+        show_hist=True,
+        show_rug=True    # Las rayitas de abajo que aparecen en tu imagen
+    )
+
+    # 4. Ajustes estéticos para fondo oscuro (Dark Mode)
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="white"),
+        xaxis=dict(gridcolor='#333', title="Monto del Ticket ($)"),
+        yaxis=dict(gridcolor='#333', title="Densidad"),
+        height=500,
+        legend=dict(font=dict(size=12, color="white")),
+        margin=dict(l=20, r=20, t=50, b=20)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 # --- NAVEGACIÓN Y FILTROS ---
-pagina = st.sidebar.radio("Navegación:", ["Overview", "Monthly Sales", "Shopper Behavior"])
+pagina = st.sidebar.radio("Navegación:", ["Overview", "Monthly Sales", "Shopper Behavior", "Advanced Analytics"])
 meses_lista = ["January", "February", "March", "April", "May", "June"]
 mes_seleccionado = st.sidebar.selectbox("Mes:", ["Todas"] + meses_lista)
 
@@ -554,3 +663,32 @@ elif pagina == "Shopper Behavior":
 
     st.markdown("---")
     top_productos_barra(df_filtered)
+
+if pagina == "Advanced Analytics":
+    distribucion_ventas_tiempo(df) # Enviamos el df completo para que el análisis sea global
+    distribucion_avanzada_tiendas(df)
+    distribucion_avanzada_estilo_oscuro(df)
+
+
+    import streamlit as st
+    import plotly.figure_factory as ff
+    import plotly.express as px
+    import pandas as pd
+    import numpy as np
+
+    st.title("📈 Gráficos Avanzados")
+
+    # Generar datos de ejemplo
+    np.random.seed(42)
+
+    # Datos para el histograma
+    hist_data = [np.random.normal(0, 1, 1000), 
+                np.random.normal(2, 1.5, 1000), 
+                np.random.normal(-1, 2, 1000)]
+
+    # Crear histograma
+    st.subheader("Histograma Multiple")
+    fig = ff.create_distplot(hist_data, 
+                            ['Grupo A', 'Grupo B', 'Grupo C'],
+                            bin_size=[.1, .1, .1])
+    st.plotly_chart(fig)
