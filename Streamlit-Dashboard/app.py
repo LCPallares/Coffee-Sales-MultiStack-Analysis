@@ -35,61 +35,78 @@ df = load_data()
 st.sidebar.title("☕ Coffee Analytics")
 st.sidebar.markdown("---")
 
-# Filtro de Mes (Equivalente a tus botones de arriba)
-meses = ["January", "February", "March", "April", "May", "June"]
-mes_seleccionado = st.sidebar.selectbox("Selecciona un Mes:", meses)
+# Opción "Todas" para el filtro de mes
+meses_disponibles = ["Todas"] + list(df['Month_Name'].unique())
+mes_seleccionado = st.sidebar.selectbox("Filtrar por Mes:", meses_disponibles)
 
-# Filtros adicionales
-tienda = st.sidebar.multiselect("Tienda:", df['store_location'].unique(), default=df['store_location'].unique())
+tiendas_disponibles = ["Todas"] + list(df['store_location'].unique())
+tienda_seleccionada = st.sidebar.selectbox("Filtrar por Tienda:", tiendas_disponibles)
 
-# Aplicar filtros al dataframe
-df_filtered = df[(df['Month_Name'] == mes_seleccionado) & (df['store_location'].isin(tienda))]
+# --- LÓGICA DE FILTRADO DINÁMICO ---
+df_filtered = df.copy()
 
-# --- LÓGICA DE NEGOCIO (DAX -> PANDAS) ---
-total_sales = df_filtered['Total_Bill'].sum()
-total_qty = df_filtered['transaction_qty'].sum()
-total_trans = df_filtered['transaction_id'].nunique()
+if mes_seleccionado != "Todas":
+    df_filtered = df_filtered[df_filtered['Month_Name'] == mes_seleccionado]
 
-# --- CUERPO DEL DASHBOARD ---
-st.title(f"Dashboard de Ventas - {mes_seleccionado}")
+if tienda_seleccionada != "Todas":
+    df_filtered = df_filtered[df_filtered['store_location'] == tienda_seleccionada]
 
-# Fila 1: KPIs (Tus tarjetas de Power BI)
+# --- VISTA GENERAL (OVERVIEW) ---
+st.title("📊 Overview: Rendimiento Global")
+st.markdown(f"Mostrando datos de: **{mes_seleccionado}** | Tienda: **{tienda_seleccionada}**")
+
+# Fila 1: KPIs Globales
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Total Ventas", f"${total_sales:,.2f}")
+    st.metric("Ventas Totales", f"${df_filtered['Total_Bill'].sum():,.2f}")
 with col2:
-    st.metric("Cantidad Vendida", f"{total_qty:,} unidades")
+    st.metric("Volumen de Productos", f"{df_filtered['transaction_qty'].sum():,}")
 with col3:
-    st.metric("Total Transacciones", f"{total_trans:,}")
+    st.metric("Total Tickets", f"{df_filtered['transaction_id'].nunique():,}")
 
 st.markdown("---")
 
-# Fila 2: Gráficos principales
-c1, c2 = st.columns(2)
+# Fila 2: Visualizaciones de Distribución
+c1, c2 = st.columns([6, 4]) # 60% y 40% de ancho
 
 with c1:
-    st.subheader("Ventas por Categoría")
+    st.subheader("Ventas por Categoría de Producto")
+    # Gráfico de barras horizontales como en tu imagen
     fig_cat = px.bar(
-        df_filtered.groupby('product_category')['Total_Bill'].sum().reset_index(),
+        df_filtered.groupby('product_category')['Total_Bill'].sum().sort_values(ascending=True).reset_index(),
         x='Total_Bill', y='product_category', orientation='h',
-        color_discrete_sequence=['#6f4e37']
+        color_discrete_sequence=['#6f4e37'],
+        template="simple_white"
     )
     st.plotly_chart(fig_cat, use_container_width=True)
 
 with c2:
-    st.subheader("Ventas por Tienda")
-    fig_tienda = px.pie(
+    st.subheader("% Ventas por Tienda")
+    fig_pie = px.pie(
         df_filtered, values='Total_Bill', names='store_location',
-        hole=0.5, color_discrete_sequence=['#3d2b1f', '#6f4e37', '#c3a689']
+        hole=0.5,
+        color_discrete_sequence=['#3d2b1f', '#6f4e37', '#c3a689']
     )
-    st.plotly_chart(fig_tienda, use_container_width=True)
+    st.plotly_chart(fig_pie, use_container_width=True)
 
-# Fila 3: Tabla Detallada
-st.subheader("Detalle de Productos")
-tabla_resumen = df_filtered.groupby('product_type').agg({
+# Fila 3: Tabla de Resumen Global (La que tienes abajo a la derecha en la Imagen 0)
+st.subheader("Resumen Ejecutivo de Categorías")
+resumen = df_filtered.groupby('product_category').agg({
     'Total_Bill': 'sum',
-    'transaction_qty': 'sum',
-    'unit_price': 'mean'
-}).rename(columns={'Total_Bill': 'Ventas', 'transaction_qty': 'Cantidad', 'unit_price': 'Precio Prom.'})
+    'unit_price': 'mean',
+    'transaction_qty': 'sum'
+}).reset_index()
 
-st.dataframe(tabla_resumen.style.format("${:,.2f}"), use_container_width=True)
+# Calculamos el % del total para la tabla
+total_v = resumen['Total_Bill'].sum()
+resumen['% sales'] = (resumen['Total_Bill'] / total_v) * 100
+
+st.dataframe(
+    resumen.style.format({
+        'Total_Bill': '${:,.2f}',
+        'unit_price': '${:,.2f}',
+        '% sales': '{:.2f}%',
+        'transaction_qty': '{:,}'
+    }), 
+    use_container_width=True
+)
