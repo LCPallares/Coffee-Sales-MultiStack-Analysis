@@ -389,20 +389,19 @@ def analisis_categoria_precio_qty(df_filtered):
     st.plotly_chart(fig, use_container_width=True)
 
 def analisis_categoria_precio_qty_cuadrantes(df_filtered):
-    st.subheader("Matriz de Análisis: Precio vs Volumen por Categoría")
+    st.subheader("🎯 Matriz Estratégica: Precio vs Volumen")
     
-    # 1. Agrupamos por categoría para obtener los promedios
+    # 1. Agrupamos por categoría
     cat_analisis = df_filtered.groupby('product_category').agg({
         'unit_price': 'mean',
         'transaction_qty': 'mean',
         'Total_Bill': 'sum'
     }).reset_index()
 
-    # 2. Calculamos los promedios globales para las líneas de los cuadrantes
     avg_price = cat_analisis['unit_price'].mean()
     avg_qty = cat_analisis['transaction_qty'].mean()
 
-    # 3. Creamos el Scatter Plot
+    # 2. Crear el Scatter Plot
     fig = px.scatter(
         cat_analisis, 
         x='unit_price', 
@@ -410,7 +409,7 @@ def analisis_categoria_precio_qty_cuadrantes(df_filtered):
         size='Total_Bill',
         color='product_category',
         hover_name='product_category',
-        text='product_category', # Añade el nombre al lado de la burbuja
+        text='product_category',
         labels={
             'unit_price': 'Precio Unitario Promedio ($)',
             'transaction_qty': 'Cant. Promedio por Transacción'
@@ -436,7 +435,31 @@ def analisis_categoria_precio_qty_cuadrantes(df_filtered):
     fig.add_annotation(x=cat_analisis['unit_price'].min(), y=cat_analisis['transaction_qty'].min(),
                 text="Underperformers", showarrow=False, opacity=0.3)
 
+
+    fig.update_traces(textposition='top center')
+    fig.update_layout(height=500, plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+    
     st.plotly_chart(fig, use_container_width=True)
+
+    # 3. BLOQUE DE INTERPRETACIÓN (Aquí agregamos tu descripción)
+    with st.expander("💡 ¿Cómo interpretar estos cuadrantes?"):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+            **🟢 Superior Derecha (Premium/Alto Volumen):** Categorías con precio y rotación por encima del promedio (${avg_price:.2f}). 
+            Son tus "Minas de Oro".
+            
+            **🔵 Superior Izquierda (Masivos):** Precios bajos pero volumen alto. Productos de alta rotación que atraen 
+            tráfico a la tienda.
+            """)
+        with col2:
+            st.markdown(f"""
+            **🟡 Inferior Derecha (Nicho/Lujo):** Precios altos pero se venden en pocas cantidades. Tienen un margen 
+            alto por unidad.
+            
+            **🔴 Inferior Izquierda (Oportunidad):** Productos con precio y volumen bajo el promedio. Requieren revisión 
+            de menú o promociones.
+            """)
 
 def ventas_por_dia_semana(df_filtered):
     st.subheader("Ventas por Día de la Semana")
