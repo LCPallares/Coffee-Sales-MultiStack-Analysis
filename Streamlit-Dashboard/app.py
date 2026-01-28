@@ -26,7 +26,11 @@ st.markdown("""
 # --- CARGA DE DATOS ---
 @st.cache_data
 def load_data():
-    df = pd.read_csv("../Data/coffee_shop_sales.csv")
+    base_path = os.path.dirname(__file__)
+    file_path = os.path.join(base_path, "..", "Data", "coffee_shop_sales.csv")
+    df = pd.read_csv(file_path)
+
+    #df = pd.read_csv("../Data/coffee_shop_sales.csv") # streamlit cloud no detecta el csv
     df['transaction_date'] = pd.to_datetime(df['transaction_date'], dayfirst=True)
 
     df['Month_Name'] = df['transaction_date'].dt.month_name()
