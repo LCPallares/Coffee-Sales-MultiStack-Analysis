@@ -554,8 +554,6 @@ def distribucion_avanzada_tiendas(df):
 
     st.plotly_chart(fig, use_container_width=True)
 
-import plotly.figure_factory as ff
-
 def distribucion_avanzada_estilo_oscuro(df):
     st.subheader("Gráficos Avanzados: Histograma Múltiple")
     
@@ -595,6 +593,112 @@ def distribucion_avanzada_estilo_oscuro(df):
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+def grafico_distribucion_dias(df):
+    st.subheader("Concentración de Ventas por Día del Mes")
+    
+    # 1. Preparar los datos tal cual tu ejemplo: una lista de listas
+    # Filtramos el número del día (1-31) por cada tienda
+    tiendas = df['store_location'].unique()
+    
+    # Esta es la estructura que buscabas: hist_data = [lista_tienda1, lista_tienda2...]
+    hist_data = [df[df['store_location'] == tienda]['Day'].tolist() for tienda in tiendas]
+    group_labels = list(tiendas)
+
+    # 2. Crear el distplot
+    # bin_size=1 es ideal porque hablamos de días individuales
+    fig = ff.create_distplot(
+        hist_data, 
+        group_labels, 
+        bin_size=1,
+        colors=['#2ca02c', '#ff7f0e', '#1f77b4'], # Verde, Naranja, Azul de tu imagen
+        show_rug=True # Las rayitas en la base que dan el toque "Advanced"
+    )
+
+    # 3. Ajustar el diseño para que no se vea amontonado
+    fig.update_layout(
+        title_text='Intensidad de Transacciones (Día 1 al 31)',
+        xaxis_title="Día del Mes",
+        yaxis_title="Densidad de Ventas",
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=500,
+        xaxis=dict(range=[1, 31], dtick=5) # Forzamos el rango de días del mes
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+def evolucion_temporal_avanzada(df_filtered):
+    st.subheader("📈 Análisis de Tendencia Diaria")
+    
+    # 1. Preparar los datos agrupados por día
+    # Agrupamos por día del mes para ver el comportamiento del 1 al 31
+    temporal_df = df_filtered.groupby('Day').agg({
+        'Total_Bill': 'sum',
+        'transaction_qty': 'sum',
+        'transaction_id': 'nunique'
+    }).reset_index()
+    
+    # Calculamos el ticket promedio diario para el segundo eje
+    temporal_df['ticket_promedio'] = temporal_df['Total_Bill'] / temporal_df['transaction_id']
+
+    # 2. Crear la figura con Graph Objects (go)
+    fig_temporal = go.Figure()
+
+    # Traza 1: Ventas Totales (Eje Y principal)
+    fig_temporal.add_trace(go.Scatter(
+        x=temporal_df['Day'],
+        y=temporal_df['Total_Bill'],
+        mode='lines+markers',
+        name='Ventas Totales ($)',
+        line=dict(color='#59270E', width=3), # Café oscuro
+        marker=dict(size=8)
+    ))
+
+    # Traza 2: Ticket Promedio (Eje Y secundario)
+    fig_temporal.add_trace(go.Scatter(
+        x=temporal_df['Day'],
+        y=temporal_df['ticket_promedio'],
+        mode='lines',
+        name='Ticket Promedio ($)',
+        line=dict(color='#4682B4', width=2, dash='dot'), # Azul acero
+        yaxis='y2'
+    ))
+
+    # 3. Configuración del diseño y el doble eje
+    fig_temporal.update_layout(
+        title='Evolución de Ventas y Ticket Promedio por Día del Mes',
+        xaxis=dict(
+            title='Día del Mes',
+            tickmode='linear',
+            range=[1, 31]
+        ),
+        yaxis=dict(
+            title=dict(text='Ventas Totales ($)', font=dict(color='#59270E')),
+            tickfont=dict(color='#59270E'),
+            gridcolor='rgba(0,0,0,0.1)'
+        ),
+        yaxis2=dict(
+            title=dict(text='Ticket Promedio ($)', font=dict(color='#4682B4')),
+            tickfont=dict(color='#4682B4'),
+            anchor='x',
+            overlaying='y',
+            side='right',
+            showgrid=False # Para no ensuciar el gráfico con doble cuadrícula
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.05,
+            xanchor="center",
+            x=0.5
+        ),
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=500
+    )
+
+    st.plotly_chart(fig_temporal, use_container_width=True)
+
 
 # --- NAVEGACIÓN Y FILTROS ---
 pagina = st.sidebar.radio("Navegación:", ["Overview", "Monthly Sales", "Shopper Behavior", "Advanced Analytics"])
@@ -666,29 +770,9 @@ elif pagina == "Shopper Behavior":
 
 if pagina == "Advanced Analytics":
     distribucion_ventas_tiempo(df) # Enviamos el df completo para que el análisis sea global
-    distribucion_avanzada_tiendas(df)
-    distribucion_avanzada_estilo_oscuro(df)
+    #distribucion_avanzada_tiendas(df)
+    #distribucion_avanzada_estilo_oscuro(df)
+    #grafico_distribucion_dias(df)
+    evolucion_temporal_avanzada(df)
 
 
-    import streamlit as st
-    import plotly.figure_factory as ff
-    import plotly.express as px
-    import pandas as pd
-    import numpy as np
-
-    st.title("📈 Gráficos Avanzados")
-
-    # Generar datos de ejemplo
-    np.random.seed(42)
-
-    # Datos para el histograma
-    hist_data = [np.random.normal(0, 1, 1000), 
-                np.random.normal(2, 1.5, 1000), 
-                np.random.normal(-1, 2, 1000)]
-
-    # Crear histograma
-    st.subheader("Histograma Multiple")
-    fig = ff.create_distplot(hist_data, 
-                            ['Grupo A', 'Grupo B', 'Grupo C'],
-                            bin_size=[.1, .1, .1])
-    st.plotly_chart(fig)
