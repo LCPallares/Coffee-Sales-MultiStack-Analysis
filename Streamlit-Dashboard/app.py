@@ -151,6 +151,55 @@ def ventas_variacion_categoria(df_actual, df_anterior):
     
     st.plotly_chart(fig_diff, use_container_width=True)
 
+def ventas_comparativas_categoria(df_actual, df_anterior):
+    st.subheader("Comparativa de Ventas: Mes Actual vs Mes Anterior")
+    
+    if df_anterior.empty:
+        st.info("Selecciona un mes a partir de Febrero para ver la comparativa con el mes anterior.")
+        return
+
+    # 1. Agrupar ventas por categoría para ambos periodos
+    cat_act = df_actual.groupby('product_category')['Total_Bill'].sum().reset_index()
+    cat_ant = df_anterior.groupby('product_category')['Total_Bill'].sum().reset_index()
+    
+    # 2. Unir ambos dataframes
+    df_comp = pd.merge(cat_act, cat_ant, on='product_category', how='outer', suffixes=('_Actual', '_Anterior')).fillna(0)
+    df_comp = df_comp.sort_values('Total_Bill_Actual', ascending=True)
+
+    # 3. Crear el gráfico de barras agrupadas
+    fig = go.Figure()
+
+    # Barra Mes Anterior (Color claro)
+    fig.add_trace(go.Bar(
+        y=df_comp['product_category'],
+        x=df_comp['Total_Bill_Anterior'],
+        name='Mes Anterior',
+        orientation='h',
+        marker_color='#c3a689'
+    ))
+
+    # Barra Mes Actual (Color oscuro)
+    fig.add_trace(go.Bar(
+        y=df_comp['product_category'],
+        x=df_comp['Total_Bill_Actual'],
+        name='Mes Actual',
+        orientation='h',
+        marker_color='#59270E'
+    ))
+
+    # 4. Configurar el diseño
+    fig.update_layout(
+        barmode='group', # Esto hace que las barras se agrupen una al lado de la otra
+        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis_title="Ventas ($)",
+        yaxis_title="",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        height=500,
+        margin=dict(l=0, r=0, t=30, b=0)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
 def tabla_resumen(df_filtered):
     st.subheader("Resumen Ejecutivo de Categorías")
     resumen = df_filtered.groupby('product_category').agg({'Total_Bill': 'sum', 'unit_price': 'mean', 'transaction_qty': 'sum'}).reset_index()
@@ -181,20 +230,22 @@ elif pagina == "Monthly Sales":
     if mes_seleccionado == "Todas":
         st.warning("Selecciona un mes para ver el detalle.")
     else:
-        st.title(f"📈 Análisis: {mes_seleccionado}")
+        st.title(f"📈 Análisis Detallado: {mes_seleccionado}")
         
         # Obtener mes anterior (Ya lo tienes en tu código)
         idx = meses_lista.index(mes_seleccionado)
         df_ant = df[df['Month_Name'] == meses_lista[idx-1]] if idx > 0 else pd.DataFrame()
         
         metricas_kpi(df_filtered, df_ant)
+        
         st.markdown("---")
         
-        # Nueva Fila con las dos gráficas de análisis
-        col_a, col_b = st.columns(2)
-        with col_a:
+        # Fila de gráficas
+        col_izq, col_der = st.columns([1, 1])
+        with col_izq:
             ventas_diarias_barra(df_filtered, mes_seleccionado)
-        with col_b:
-            ventas_variacion_categoria(df_filtered, df_ant) # <-- Llamada a la nueva función
+        with col_der:
+            # Llamamos a la nueva función de dos barras por categoría
+            ventas_comparativas_categoria(df_filtered, df_ant)
             
         tabla_resumen(df_filtered)
