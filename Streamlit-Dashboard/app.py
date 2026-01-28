@@ -353,6 +353,41 @@ def analisis_precio_transacciones(df_filtered):
     
     st.plotly_chart(fig, use_container_width=True)
 
+def analisis_categoria_precio_qty(df_filtered):
+    st.subheader("Relación Precio vs Cantidad por Categoría")
+    
+    # 1. Agrupamos por categoría para obtener los promedios
+    cat_analisis = df_filtered.groupby('product_category').agg({
+        'unit_price': 'mean',
+        'transaction_qty': 'mean',
+        'Total_Bill': 'sum' # Usaremos el total para el tamaño de la burbuja
+    }).reset_index()
+
+    # 2. Creamos el Scatter Plot
+    fig = px.scatter(
+        cat_analisis, 
+        x='unit_price', 
+        y='transaction_qty',
+        size='Total_Bill', # El tamaño de la burbuja indica el ingreso total
+        color='product_category', # Colores por categoría
+        hover_name='product_category',
+        labels={
+            'unit_price': 'Precio Unitario Promedio ($)',
+            'transaction_qty': 'Cant. Promedio por Transacción',
+            'product_category': 'Categoría'
+        },
+        # Usamos una paleta de cafés y cremas
+        color_discrete_sequence=px.colors.sequential.Oryel
+    )
+
+    fig.update_layout(
+        height=500,
+        plot_bgcolor='rgba(0,0,0,0)',
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
 def ventas_por_dia_semana(df_filtered):
     st.subheader("Ventas por Día de la Semana")
     
@@ -440,7 +475,8 @@ elif pagina == "Shopper Behavior":
     with col_a:
         analisis_precio_transacciones(df_filtered)
     with col_b:
-        ventas_por_dia_semana(df_filtered)
+        #ventas_por_dia_semana(df_filtered)
+        analisis_categoria_precio_qty(df_filtered)
 
     st.markdown("---")
     top_productos_barra(df_filtered)
