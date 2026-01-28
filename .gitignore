@@ -1,0 +1,32 @@
+# --- Power BI ---
+*.tmp
+*.temp
+SecurityBindings.pbi
+User.zip
+# Ignoramos archivos grandes si pesan más de 100MB (opcional)
+# *.pbix 
+
+# --- Python (Streamlit / Dash) ---
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+ENV/
+bin/
+lib/
+# Archivos de configuración de Streamlit
+.streamlit/config.toml
+
+# --- Datos ---
+# Es buena práctica ignorar archivos de datos gigantes y solo subir una muestra
+# *.csv
+# *.xlsx
+
+# --- Sistema ---
+Thumbs.db
+.DS_Store
+
+tests/
