@@ -27,11 +27,16 @@ st.markdown("""
 def load_data():
     df = pd.read_csv("../Data/coffee_shop_sales.csv")
     df['transaction_date'] = pd.to_datetime(df['transaction_date'], dayfirst=True)
+
     df['Month_Name'] = df['transaction_date'].dt.month_name()
-    df['Day'] = df['transaction_date'].dt.day 
-    # Extraer hora para la página 3 futura
-    df['Hour'] = df['transaction_date'].dt.hour
+    df['Day'] = df['transaction_date'].dt.day
+    #df['Hour'] = df['transaction_date'].dt.hour
+    #df['transaction_time'] = pd.to_datetime(df['transaction_time'])
+    #df['Hour'] = df['transaction_time'].dt.hour  # ya tenemos columna hora
     df['Day_Name'] = df['transaction_date'].dt.day_name()
+
+    # Mantenemos Total_Bill como numérico por si acaso
+    df['Total_Bill'] = df['unit_price'] * df['transaction_qty']
     return df
 
 df = load_data()
@@ -206,8 +211,62 @@ def tabla_resumen(df_filtered):
     resumen['% sales'] = (resumen['Total_Bill'] / resumen['Total_Bill'].sum()) * 100
     st.dataframe(resumen.style.format({'Total_Bill': '${:,.2f}', 'unit_price': '${:,.2f}', '% sales': '{:.2f}%'}), use_container_width=True)
 
+def mapa_calor_horarios(df_filtered):
+    st.subheader("Patrón de Tráfico: Horas vs. Días de la Semana")
+    st.subheader(f"hora: {df_filtered['Hour']}")
+    
+    # 1. Preparar los datos: Tabla pivote
+    # Ordenamos los días para que no salgan alfabéticos
+    orden_dias = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    
+    pivot_table = df_filtered.pivot_table(
+        index='Hour',
+        columns='Day Name',
+        values='Total_Bill',
+        aggfunc='sum'
+    ).reindex(columns=orden_dias)
+
+    # 2. Crear el Heatmap con Plotly
+    fig = px.imshow(
+        pivot_table,
+        labels=dict(x="Día de la Semana", y="Hora del Día", color="Ventas ($)"),
+        x=pivot_table.columns,
+        y=pivot_table.index,
+        # Escala de colores: de crema a café oscuro
+        color_continuous_scale=[[0, '#fdf5e6'], [0.5, '#c3a689'], [1, '#59270E']]
+    )
+
+    fig.update_layout(
+        xaxis_title="",
+        yaxis_title="Hora (formato 24h)",
+        coloraxis_showscale=True,
+        height=500
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+def top_productos_barra(df_filtered):
+    st.subheader("Top 10 Productos por Volumen")
+    top_productos = df_filtered.groupby('product_type')['transaction_qty'].sum().sort_values(ascending=False).head(10).reset_index()
+    
+    # Cambiamos marker_color por color_discrete_sequence
+    fig_top = px.bar(
+        top_productos, 
+        x='transaction_qty', 
+        y='product_type', 
+        orientation='h', 
+        color_discrete_sequence=['#6f4e37'], # <--- Fix aplicado
+        template="simple_white"
+    )
+    
+    # Para que el top 1 aparezca arriba
+    fig_top.update_layout(yaxis={'categoryorder':'total ascending'})
+    
+    st.plotly_chart(fig_top, use_container_width=True)
+
+
 # --- NAVEGACIÓN Y FILTROS ---
-pagina = st.sidebar.radio("Navegación:", ["Overview", "Monthly Sales"])
+pagina = st.sidebar.radio("Navegación:", ["Overview", "Monthly Sales", "Shopper Behavior"])
 meses_lista = ["January", "February", "March", "April", "May", "June"]
 mes_seleccionado = st.sidebar.selectbox("Mes:", ["Todas"] + meses_lista)
 
@@ -249,3 +308,16 @@ elif pagina == "Monthly Sales":
             ventas_comparativas_categoria(df_filtered, df_ant)
             
         tabla_resumen(df_filtered)
+
+elif pagina == "Shopper Behavior":
+    st.title("👥 Comportamiento del Consumidor")
+    
+    # KPIs Rápidos (siempre útiles)
+    metricas_kpi(df_filtered)
+    st.markdown("---")
+    
+    # El Heatmap ocupa el ancho total
+    mapa_calor_horarios(df_filtered)
+    
+    # Fila adicional: Productos más vendidos en esta selección
+    top_productos_barra(df_filtered)
