@@ -244,6 +244,62 @@ def mapa_calor_horarios(df_filtered):
     
     st.plotly_chart(fig, use_container_width=True)
 
+def mapa_calor_con_totales(df_filtered):
+    st.subheader("Patrón de Tráfico: Horas vs. Días")
+    
+    # 1. Preparar los datos
+    orden_dias = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    
+    pivot_table = df_filtered.pivot_table(
+        index='Hour',
+        columns='Day_Name',
+        values='Total_Bill',
+        aggfunc='sum'
+    ).reindex(columns=orden_dias).fillna(0)
+
+    # 2. Crear el Heatmap
+    fig_heat = px.imshow(
+        pivot_table,
+        labels=dict(x="", y="Hora", color="Ventas ($)"),
+        x=pivot_table.columns,
+        y=pivot_table.index,
+        color_continuous_scale=[[0, '#fdf5e6'], [0.5, '#c3a689'], [1, '#59270E']]
+    )
+    
+    fig_heat.update_layout(height=400, margin=dict(b=0)) # Quitamos margen inferior
+    st.plotly_chart(fig_heat, use_container_width=True)
+
+    # 3. Crear los Totales por Día (La barra de abajo)
+    totales_dia = df_filtered.groupby('Day_Name')['Total_Bill'].sum().reindex(orden_dias).reset_index()
+    promedio = totales_dia['Total_Bill'].mean()
+    
+    # Aplicamos tu lógica de color: café oscuro si supera el promedio
+    colores = ['#59270E' if x >= promedio else '#c3a689' for x in totales_dia['Total_Bill']]
+
+    fig_bar = go.Figure()
+    fig_bar.add_trace(go.Bar(
+        x=totales_dia['Day_Name'],
+        y=totales_dia['Total_Bill'],
+        marker_color=colores,
+        text=[f"${x:,.0f}" for x in totales_dia['Total_Bill']],
+        textposition='outside',
+        cliponaxis=False
+    ))
+
+    fig_bar.update_layout(
+        height=200,  # Aumentamos un poco la altura para que quepan las etiquetas
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(t=50, b=0), # Cambiamos t=0 por t=50 para dar espacio a los valores
+        xaxis_title="",
+        yaxis_title="Total Día",
+        showlegend=False
+    )
+    
+    # Ajustamos el eje Y para que las etiquetas no se corten
+    fig_bar.update_yaxes(visible=False) 
+    
+    st.plotly_chart(fig_bar, use_container_width=True)
+
 def top_productos_barra(df_filtered):
     st.subheader("Top 10 Productos por Volumen")
     top_productos = df_filtered.groupby('product_type')['transaction_qty'].sum().sort_values(ascending=False).head(10).reset_index()
@@ -374,7 +430,8 @@ elif pagina == "Shopper Behavior":
     st.markdown("---")
     
     # Fila 1: Heatmap (Ancho completo)
-    mapa_calor_horarios(df_filtered)
+    #mapa_calor_horarios(df_filtered)
+    mapa_calor_con_totales(df_filtered)
     
     st.markdown("---")
     
