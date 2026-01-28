@@ -3,31 +3,17 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# --- 1. CONFIGURACIÓN DE PÁGINA ---
+# --- CONFIGURACIÓN Y ESTILO ---
 st.set_page_config(page_title="Coffee Shop Sales Analysis", layout="wide")
 
-# --- 2. ESTILO CSS (Fix para KPIs y Colores) ---
 st.markdown("""
     <style>
     [data-testid="stSidebar"] { background-color: #3d2b1f; }
-
-    /* Fondo de la página */
-    .main {
-        background-color: #fdf5e6;
-    }
-    
-    /* Estilo de las tarjetas de métricas */
-    /* .stMetric { background-color: #fdf5e6; padding: 15px; border-radius: 10px; } */
-
-    [data-testid="stMetricValue"] {
-        color: #3d2b1f !important; /* Texto oscuro para el valor */
-        font-weight: bold;
-    }
-    [data-testid="stMetricLabel"] {
-        color: #6f4e37 !important; /* Texto café para la etiqueta */
-    }
+    .main { background-color: #fdf5e6; }
+    [data-testid="stMetricValue"] { color: #3d2b1f !important; font-weight: bold; }
+    [data-testid="stMetricLabel"] { color: #6f4e37 !important; }
     div[data-testid="metric-container"] {
-        background-color: #ffffff; /* Fondo blanco/crema para la tarjeta */
+        background-color: #ffffff;
         border: 1px solid #c3a689;
         padding: 15px;
         border-radius: 10px;
@@ -36,19 +22,42 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. CARGA DE DATOS ---
+# --- CARGA DE DATOS ---
 @st.cache_data
 def load_data():
-    # Ajusta la ruta si es necesario
     df = pd.read_csv("../Data/coffee_shop_sales.csv")
     df['transaction_date'] = pd.to_datetime(df['transaction_date'], dayfirst=True)
     df['Month_Name'] = df['transaction_date'].dt.month_name()
     df['Day'] = df['transaction_date'].dt.day 
+    # Extraer hora para la página 3 futura
+    df['Hour'] = df['transaction_date'].dt.hour
+    df['Day_Name'] = df['transaction_date'].dt.day_name()
     return df
 
 df = load_data()
 
-# --- 4. FUNCIONES DE VISUALIZACIÓN ---
+# --- FUNCIONES DE VISUALIZACIÓN ---
+
+def metricas_kpi(df_filtered, df_ant=None):
+    col1, col2, col3 = st.columns(3)
+    
+    def calc_delta(act, ant):
+        return ((act - ant) / ant) * 100 if ant is not None and ant > 0 else None
+
+    v_act = df_filtered['Total_Bill'].sum()
+    q_act = df_filtered['transaction_qty'].sum()
+    t_act = df_filtered['transaction_id'].nunique()
+
+    v_ant = df_ant['Total_Bill'].sum() if df_ant is not None and not df_ant.empty else None
+    q_ant = df_ant['transaction_qty'].sum() if df_ant is not None and not df_ant.empty else None
+    t_ant = df_ant['transaction_id'].nunique() if df_ant is not None and not df_ant.empty else None
+
+    with col1:
+        st.metric("Ventas Totales", f"${v_act:,.2f}", f"{calc_delta(v_act, v_ant):.2f}%" if v_ant else None)
+    with col2:
+        st.metric("Cantidad Vendida", f"{q_act:,}", f"{calc_delta(q_act, q_ant):.2f}%" if q_ant else None)
+    with col3:
+        st.metric("Total Transacciones", f"{t_act:,}", f"{calc_delta(t_act, t_ant):.2f}%" if t_ant else None)
 
 def ventas_categorias_productos(df_filtered):
     st.subheader("Ventas por Categoría")
@@ -69,107 +78,123 @@ def ventas_tiendas(df_filtered):
     )
     st.plotly_chart(fig_pie, use_container_width=True)
 
-def ventas_mes_con_promedio(df_all):
-    st.subheader("Tendencia Mensual")
+def ventas_mensuales_tendencia(df_all):
+    st.subheader("Tendencia Mensual Global")
     meses_ordenados = ["January", "February", "March", "April", "May", "June"]
     df_mensual = df_all.groupby('Month_Name')['Total_Bill'].sum().reindex(meses_ordenados).reset_index()
-    promedio_ventas = df_mensual['Total_Bill'].mean()
+    promedio = df_mensual['Total_Bill'].mean()
+    
+    colores = ['#59270E' if val >= promedio else '#c3a689' for val in df_mensual['Total_Bill']]
+    
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=df_mensual['Month_Name'], y=df_mensual['Total_Bill'], marker_color=colores))
+    fig.add_hline(y=promedio, line_dash="dot", line_color="#3d2b1f")
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', height=400)
+    st.plotly_chart(fig, use_container_width=True)
 
-    fig_mes = go.Figure()
-    fig_mes.add_trace(go.Bar(
-        x=df_mensual['Month_Name'], y=df_mensual['Total_Bill'],
-        marker_color='#6f4e37',
-        text=[f"${val:,.0f}" for val in df_mensual['Total_Bill']],
-        textposition='auto'
-    ))
-    fig_mes.add_hline(y=promedio_ventas, line_dash="dot", line_color="#3d2b1f", 
-                      annotation_text=f"Promedio: ${promedio_ventas:,.0f}")
-    fig_mes.update_layout(plot_bgcolor='rgba(0,0,0,0)', height=400)
-    st.plotly_chart(fig_mes, use_container_width=True)
+def ventas_diarias_barra(df_filtered, mes_nombre):
+    st.subheader(f"Ventas por Día - {mes_nombre}")
+    daily = df_filtered.groupby('Day')['Total_Bill'].sum().reset_index()
+    avg_val = daily['Total_Bill'].mean()
+    colores = ['#59270E' if val >= avg_val else '#c3a689' for val in daily['Total_Bill']]
+    
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=daily['Day'], y=daily['Total_Bill'], marker_color=colores))
+    fig.add_hline(y=avg_val, line_dash="dot", line_color="#3d2b1f", annotation_text=f"Promedio: ${avg_val:,.0f}")
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', height=400)
+    st.plotly_chart(fig, use_container_width=True)
 
-def tabla_categoria(df_filtered):
-    st.subheader("Resumen Ejecutivo")
-    resumen = df_filtered.groupby('product_category').agg({
-        'Total_Bill': 'sum',
-        'unit_price': 'mean',
-        'transaction_qty': 'sum'
-    }).reset_index()
-    total_v = resumen['Total_Bill'].sum()
-    resumen['% sales'] = (resumen['Total_Bill'] / total_v) * 100
-    st.dataframe(resumen.style.format({
-        'Total_Bill': '${:,.2f}', 'unit_price': '${:,.2f}',
-        '% sales': '{:.2f}%', 'transaction_qty': '{:,}'
-    }), use_container_width=True)
+def ventas_variacion_categoria(df_actual, df_anterior):
+    st.subheader("Variación de Ventas vs Mes Anterior ($)")
+    
+    if df_anterior.empty:
+        st.info("No hay datos del mes anterior para comparar.")
+        return
 
-def kpis_mensuales_comparativos(df_act, df_ant):
-    c1, c2, c3 = st.columns(3)
-    def calc_delta(act, ant):
-        return ((act - ant) / ant) * 100 if ant > 0 else 0
+    # 1. Calcular ventas por categoría para ambos meses
+    cat_act = df_actual.groupby('product_category')['Total_Bill'].sum()
+    cat_ant = df_anterior.groupby('product_category')['Total_Bill'].sum()
+    
+    # 2. Crear DataFrame de comparación
+    df_diff = pd.DataFrame({
+        'Actual': cat_act,
+        'Anterior': cat_ant
+    }).fillna(0)
+    
+    df_diff['Diferencia'] = df_diff['Actual'] - df_diff['Anterior']
+    df_diff = df_diff.sort_values('Diferencia', ascending=True).reset_index()
+    
+    # 3. Lógica de color: Café oscuro para positivo, Gris/Crema para negativo
+    df_diff['Color'] = ['#59270E' if x > 0 else '#c3a689' for x in df_diff['Diferencia']]
+    
+    fig_diff = px.bar(
+        df_diff, 
+        x='Diferencia', 
+        y='product_category', 
+        orientation='h',
+        title="Diferencia Nominal en Ventas",
+        text='Diferencia'
+    )
+    
+    fig_diff.update_traces(
+        marker_color=df_diff['Color'],
+        texttemplate='%{text:$.2s}', # Formato de moneda abreviado (k)
+        textposition='outside'
+    )
+    
+    fig_diff.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis_title="Diferencia en USD",
+        yaxis_title="",
+        height=400
+    )
+    
+    st.plotly_chart(fig_diff, use_container_width=True)
 
-    with c1:
-        v_act, v_ant = df_act['Total_Bill'].sum(), df_ant['Total_Bill'].sum() if not df_ant.empty else 0
-        st.metric("Ventas Totales", f"${v_act:,.2f}", f"{calc_delta(v_act, v_ant):.2f}% vs PM")
-    with c2:
-        q_act, q_ant = df_act['transaction_qty'].sum(), df_ant['transaction_qty'].sum() if not df_ant.empty else 0
-        st.metric("Cantidad Vendida", f"{q_act:,}", f"{calc_delta(q_act, q_ant):.2f}% vs PM")
-    with c3:
-        t_act, t_ant = df_act['transaction_id'].nunique(), df_ant['transaction_id'].nunique() if not df_ant.empty else 0
-        st.metric("Transacciones", f"{t_act:,}", f"{calc_delta(t_act, t_ant):.2f}% vs PM")
+def tabla_resumen(df_filtered):
+    st.subheader("Resumen Ejecutivo de Categorías")
+    resumen = df_filtered.groupby('product_category').agg({'Total_Bill': 'sum', 'unit_price': 'mean', 'transaction_qty': 'sum'}).reset_index()
+    resumen['% sales'] = (resumen['Total_Bill'] / resumen['Total_Bill'].sum()) * 100
+    st.dataframe(resumen.style.format({'Total_Bill': '${:,.2f}', 'unit_price': '${:,.2f}', '% sales': '{:.2f}%'}), use_container_width=True)
 
-# --- 5. SIDEBAR (Navegación y Filtros) ---
-st.sidebar.title("☕ Coffee Analytics")
+# --- NAVEGACIÓN Y FILTROS ---
 pagina = st.sidebar.radio("Navegación:", ["Overview", "Monthly Sales"])
-st.sidebar.markdown("---")
+meses_lista = ["January", "February", "March", "April", "May", "June"]
+mes_seleccionado = st.sidebar.selectbox("Mes:", ["Todas"] + meses_lista)
 
-meses_disponibles = ["Todas"] + ["January", "February", "March", "April", "May", "June"]
-mes_seleccionado = st.sidebar.selectbox("Filtrar por Mes:", meses_disponibles)
-
-tiendas_disponibles = ["Todas"] + list(df['store_location'].unique())
-tienda_seleccionada = st.sidebar.selectbox("Filtrar por Tienda:", tiendas_disponibles)
-
-# Lógica de filtrado
 df_filtered = df.copy()
 if mes_seleccionado != "Todas":
     df_filtered = df_filtered[df_filtered['Month_Name'] == mes_seleccionado]
-if tienda_seleccionada != "Todas":
-    df_filtered = df_filtered[df_filtered['store_location'] == tienda_seleccionada]
 
-# --- 6. RENDERIZADO DE PÁGINAS ---
-
+# --- RENDER ---
 if pagina == "Overview":
-    st.title("📊 Vista General del Negocio")
-    
-    # KPIs Rápidos
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Ingresos", f"${df_filtered['Total_Bill'].sum():,.2f}")
-    col2.metric("Unidades", f"{df_filtered['transaction_qty'].sum():,}")
-    col3.metric("Tickets", f"{df_filtered['transaction_id'].nunique():,}")
-    
+    st.title("📊 Coffee Overview")
+    metricas_kpi(df_filtered)
     st.markdown("---")
     c1, c2 = st.columns([6, 4])
     with c1: ventas_categorias_productos(df_filtered)
     with c2: ventas_tiendas(df_filtered)
-    
-    ventas_mes_con_promedio(df) # Siempre pasamos df completo para ver la tendencia
-    tabla_categoria(df_filtered)
+    ventas_mensuales_tendencia(df)
+    tabla_resumen(df_filtered)
 
 elif pagina == "Monthly Sales":
     if mes_seleccionado == "Todas":
-        st.warning("Selecciona un mes en el sidebar para ver el análisis comparativo.")
+        st.warning("Selecciona un mes para ver el detalle.")
     else:
-        st.title(f"📈 Análisis Detallado: {mes_seleccionado}")
+        st.title(f"📈 Análisis: {mes_seleccionado}")
         
-        # Obtener mes anterior para deltas
-        meses_lista = ["January", "February", "March", "April", "May", "June"]
+        # Obtener mes anterior (Ya lo tienes en tu código)
         idx = meses_lista.index(mes_seleccionado)
-        mes_ant_nombre = meses_lista[idx - 1] if idx > 0 else None
-        df_ant = df[df['Month_Name'] == mes_ant_nombre] if mes_ant_nombre else pd.DataFrame()
+        df_ant = df[df['Month_Name'] == meses_lista[idx-1]] if idx > 0 else pd.DataFrame()
         
-        kpis_mensuales_comparativos(df_filtered, df_ant)
+        metricas_kpi(df_filtered, df_ant)
         st.markdown("---")
         
-        # Gráfico diario (Replica de tu Imagen 1)
-        daily = df_filtered.groupby('Day')['Total_Bill'].sum().reset_index()
-        fig_d = px.bar(daily, x='Day', y='Total_Bill', title="Ventas Diarias", color_discrete_sequence=['#c3a689'])
-        fig_d.add_hline(y=daily['Total_Bill'].mean(), line_dash="dot", line_color="#3d2b1f")
-        st.plotly_chart(fig_d, use_container_width=True)
+        # Nueva Fila con las dos gráficas de análisis
+        col_a, col_b = st.columns(2)
+        with col_a:
+            ventas_diarias_barra(df_filtered, mes_seleccionado)
+        with col_b:
+            ventas_variacion_categoria(df_filtered, df_ant) # <-- Llamada a la nueva función
+            
+        tabla_resumen(df_filtered)
