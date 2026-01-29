@@ -75,10 +75,10 @@ CALCULATE(
 
 ## 📸 Capturas de Pantalla
 
-| Stack   | Screenshots                                                   |                                                               |                                                               |
-|:------- |:------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
-| PowerBI | ![powerbi](assets/screenshots/coffee_shop_sales-images-0.jpg) | ![powerbi](assets/screenshots/coffee_shop_sales-images-1.jpg) | ![powerbi](assets/screenshots/coffee_shop_sales-images-2.jpg) |
-|         |                                                               |                                                               |                                                               |
+| Stack     | Screenshots                                                   |                                                                                                                                                  |                                                               |
+|:--------- |:------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| PowerBI   | ![powerbi](assets/screenshots/coffee_shop_sales-images-0.jpg) | ![powerbi](assets/screenshots/coffee_shop_sales-images-1.jpg)                                                                                    | ![powerbi](assets/screenshots/coffee_shop_sales-images-2.jpg) |
+| Streamlit | ![streamlit](https://i.imgur.com/BUEawevm.jpg)                | ![streamlit2](assets/screenshots/coffe_dashboard_streamlit_2.png) |                                                               |
 
 url streamlit cloud: https://lcpallares-coffee-sales-multistac-streamlit-dashboardapp-mzdsea.streamlit.app/
 
