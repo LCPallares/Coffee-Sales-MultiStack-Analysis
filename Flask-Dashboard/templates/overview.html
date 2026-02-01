@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Overview - Coffee Shop Sales{% endblock %}
+
+{% block content %}
+<h1 class="page-title">📊 Coffee Overview</h1>
+
+<!-- KPIs -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Ventas Totales</div>
+            <div class="metric-value">${{ "%.2f"|format(metrics.ventas.value) }}</div>
+            {% if metrics.ventas.delta %}
+            <div class="metric-delta {% if metrics.ventas.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.ventas.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Cantidad Vendida</div>
+            <div class="metric-value">{{ "{:,}".format(metrics.cantidad.value|int) }}</div>
+            {% if metrics.cantidad.delta %}
+            <div class="metric-delta {% if metrics.cantidad.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.cantidad.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Total Transacciones</div>
+            <div class="metric-value">{{ "{:,}".format(metrics.transacciones.value|int) }}</div>
+            {% if metrics.transacciones.delta %}
+            <div class="metric-delta {% if metrics.transacciones.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.transacciones.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<!-- Gráficos principales -->
+<div class="row mb-4">
+    <div class="col-lg-7">
+        <div class="chart-container">
+            <h5>Ventas por Categoría</h5>
+            <div id="chartCategorias"></div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="chart-container">
+            <h5>% Ventas por Tienda</h5>
+            <div id="chartTiendas"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Tendencia mensual -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5>Tendencia Mensual Global</h5>
+            <div id="chartMensual"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla resumen -->
+<div class="row">
+    <div class="col-12">
+        <div class="table-container">
+            <h5>Resumen Ejecutivo de Categorías</h5>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Ventas Totales</th>
+                        <th>Precio Promedio</th>
+                        <th>Cantidad Total</th>
+                        <th>% Ventas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in tabla %}
+                    <tr>
+                        <td>{{ row['Categoría'] }}</td>
+                        <td>${{ "%.2f"|format(row['Ventas Totales']) }}</td>
+                        <td>${{ "%.2f"|format(row['Precio Promedio']) }}</td>
+                        <td>{{ row['Cantidad Total']|int }}</td>
+                        <td>{{ "%.2f"|format(row['% Ventas']) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var graphCategorias = {{ graph_categorias|safe }};
+    var graphTiendas = {{ graph_tiendas|safe }};
+    var graphMensual = {{ graph_mensual|safe }};
+    
+    Plotly.newPlot('chartCategorias', graphCategorias.data, graphCategorias.layout, {responsive: true});
+    Plotly.newPlot('chartTiendas', graphTiendas.data, graphTiendas.layout, {responsive: true});
+    Plotly.newPlot('chartMensual', graphMensual.data, graphMensual.layout, {responsive: true});
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Sales - Coffee Shop Sales{% endblock %}
+
+{% block content %}
+{% if show_warning %}
+<div class="alert alert-warning" role="alert">
+    Selecciona un mes específico para ver el análisis detallado.
+</div>
+{% else %}
+<h1 class="page-title">📈 Análisis Detallado: {{ mes_nombre }}</h1>
+
+<!-- KPIs -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Ventas Totales</div>
+            <div class="metric-value">${{ "%.2f"|format(metrics.ventas.value) }}</div>
+            {% if metrics.ventas.delta %}
+            <div class="metric-delta {% if metrics.ventas.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.ventas.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Cantidad Vendida</div>
+            <div class="metric-value">{{ "{:,}".format(metrics.cantidad.value|int) }}</div>
+            {% if metrics.cantidad.delta %}
+            <div class="metric-delta {% if metrics.cantidad.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.cantidad.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Total Transacciones</div>
+            <div class="metric-value">{{ "{:,}".format(metrics.transacciones.value|int) }}</div>
+            {% if metrics.transacciones.delta %}
+            <div class="metric-delta {% if metrics.transacciones.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.transacciones.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<!-- Gráficos comparativos -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h5>Ventas por Día - {{ mes_nombre }}</h5>
+            <div id="chartDiarias"></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h5>Comparativa de Ventas: Mes Actual vs Mes Anterior</h5>
+            {% if graph_comparativa %}
+            <div id="chartComparativa"></div>
+            {% else %}
+            <p class="text-muted">No hay datos del mes anterior para comparar.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Tabla resumen -->
+<div class="row">
+    <div class="col-12">
+        <div class="table-container">
+            <h5>Resumen Ejecutivo de Categorías</h5>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Ventas Totales</th>
+                        <th>Precio Promedio</th>
+                        <th>Cantidad Total</th>
+                        <th>% Ventas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in tabla %}
+                    <tr>
+                        <td>{{ row['Categoría'] }}</td>
+                        <td>${{ "%.2f"|format(row['Ventas Totales']) }}</td>
+                        <td>${{ "%.2f"|format(row['Precio Promedio']) }}</td>
+                        <td>{{ row['Cantidad Total']|int }}</td>
+                        <td>{{ "%.2f"|format(row['% Ventas']) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if not show_warning %}
+<script>
+    var graphDiarias = {{ graph_diarias|safe }};
+    Plotly.newPlot('chartDiarias', graphDiarias.data, graphDiarias.layout, {responsive: true});
+    
+    {% if graph_comparativa %}
+    var graphComparativa = {{ graph_comparativa|safe }};
+    Plotly.newPlot('chartComparativa', graphComparativa.data, graphComparativa.layout, {responsive: true});
+    {% endif %}
+</script>
+{% endif %}
+{% endblock %}

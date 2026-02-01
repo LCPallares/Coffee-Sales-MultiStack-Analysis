@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Analytics - Coffee Shop Sales{% endblock %}
+
+{% block content %}
+<h1 class="page-title">🔬 Advanced Analytics</h1>
+
+<!-- Distribución Temporal -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5>Distribución de Ventas por Tienda en el Tiempo</h5>
+            <p class="text-muted">Visualización de la intensidad de ventas desde Enero a Junio</p>
+            <div id="chartDistribucion"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Evolución Temporal Avanzada -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5>📈 Análisis de Tendencia Diaria</h5>
+            <div id="chartEvolucion"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info" role="alert">
+            <h5>💡 Insights del Análisis Avanzado</h5>
+            <ul class="mb-0">
+                <li>El gráfico de área muestra cómo las ventas se distribuyen entre tiendas a lo largo del tiempo.</li>
+                <li>La tendencia diaria combina ventas totales con el ticket promedio para identificar patrones de comportamiento.</li>
+                <li>Los picos en ambos gráficos pueden indicar días especiales, promociones o eventos externos.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var graphDistribucion = {{ graph_distribucion|safe }};
+    var graphEvolucion = {{ graph_evolucion|safe }};
+    
+    Plotly.newPlot('chartDistribucion', graphDistribucion.data, graphDistribucion.layout, {responsive: true});
+    Plotly.newPlot('chartEvolucion', graphEvolucion.data, graphEvolucion.layout, {responsive: true});
+</script>
+{% endblock %}

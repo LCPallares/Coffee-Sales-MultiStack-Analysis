@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Shopper Behavior - Coffee Shop Sales{% endblock %}
+
+{% block content %}
+<h1 class="page-title">👥 Comportamiento del Consumidor</h1>
+
+<!-- KPIs -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Ventas Totales</div>
+            <div class="metric-value">${{ "%.2f"|format(metrics.ventas.value) }}</div>
+            {% if metrics.ventas.delta %}
+            <div class="metric-delta {% if metrics.ventas.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.ventas.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Cantidad Vendida</div>
+            <div class="metric-value">{{ "{:,}".format(metrics.cantidad.value|int) }}</div>
+            {% if metrics.cantidad.delta %}
+            <div class="metric-delta {% if metrics.cantidad.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.cantidad.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-label">Total Transacciones</div>
+            <div class="metric-value">{{ "{:,}".format(metrics.transacciones.value|int) }}</div>
+            {% if metrics.transacciones.delta %}
+            <div class="metric-delta {% if metrics.transacciones.delta > 0 %}positive{% else %}negative{% endif %}">
+                {{ "%.2f"|format(metrics.transacciones.delta) }}%
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<!-- Mapa de Calor -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5>Patrón de Tráfico: Horas vs. Días</h5>
+            <div id="chartCalor"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <div id="chartTotalesDia"></div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<!-- Análisis de Precio y Matriz Estratégica -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h5>Efecto del Precio Unitario en el Volumen</h5>
+            <div id="chartPrecio"></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h5>🎯 Matriz Estratégica: Precio vs Volumen</h5>
+            <div id="chartMatriz"></div>
+            
+            <div class="accordion mt-3" id="accordionInterpretacion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInterpretacion">
+                            💡 ¿Cómo interpretar estos cuadrantes?
+                        </button>
+                    </h2>
+                    <div id="collapseInterpretacion" class="accordion-collapse collapse" data-bs-parent="#accordionInterpretacion">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>🟢 Superior Derecha (Premium/Alto Volumen):</strong> Categorías con precio y rotación por encima del promedio (${{ avg_price }}). Son tus "Minas de Oro".</p>
+                                    <p><strong>🔵 Superior Izquierda (Masivos):</strong> Precios bajos pero volumen alto. Productos de alta rotación que atraen tráfico a la tienda.</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>🟡 Inferior Derecha (Nicho/Lujo):</strong> Precios altos pero se venden en pocas cantidades. Tienen un margen alto por unidad.</p>
+                                    <p><strong>🔴 Inferior Izquierda (Oportunidad):</strong> Productos con precio y volumen bajo el promedio. Requieren revisión de menú o promociones.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<!-- Top Productos -->
+<div class="row">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5>Top 10 Productos por Volumen</h5>
+            <div id="chartTop"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var graphCalor = {{ graph_calor|safe }};
+    var graphTotales = {{ graph_totales|safe }};
+    var graphPrecio = {{ graph_precio|safe }};
+    var graphMatriz = {{ graph_matriz|safe }};
+    var graphTop = {{ graph_top|safe }};
+    
+    Plotly.newPlot('chartCalor', graphCalor.data, graphCalor.layout, {responsive: true});
+    Plotly.newPlot('chartTotalesDia', graphTotales.data, graphTotales.layout, {responsive: true});
+    Plotly.newPlot('chartPrecio', graphPrecio.data, graphPrecio.layout, {responsive: true});
+    Plotly.newPlot('chartMatriz', graphMatriz.data, graphMatriz.layout, {responsive: true});
+    Plotly.newPlot('chartTop', graphTop.data, graphTop.layout, {responsive: true});
+</script>
+{% endblock %}
