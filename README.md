@@ -86,4 +86,4 @@ url streamlit cloud: https://lcpallares-coffee-sales-multistac-streamlit-dashboa
 
 ## ✒️ Autor
 
-**Luis Carlos Pallares Ascanio** - [Tu LinkedIn](https://linkedin.com/in/lcpallares)
+**Luis Carlos Pallares Ascanio** - [LinkedIn](https://linkedin.com/in/lcpallares)
