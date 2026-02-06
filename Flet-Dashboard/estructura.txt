@@ -1,0 +1,15 @@
+coffee_shop_dashboard/
+├── main.py              # Punto de entrada principal
+├── config.py           # Configuración y constantes
+├── data_loader.py      # Carga y procesamiento de datos
+├── components/
+│   ├── sidebar.py      # Barra lateral de navegación
+│   ├── header.py       # Header con usuario y notificaciones
+│   └── cards.py        # Componentes de tarjetas y métricas
+├── pages/
+│   ├── dashboard.py    # Página principal del dashboard
+│   ├── sales.py        # Página de ventas detalladas
+│   ├── products.py     # Página de análisis de productos
+│   └── analytics.py    # Página de analytics avanzados
+└── utils/
+    └── helpers.py      # Funciones de ayuda
