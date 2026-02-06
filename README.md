@@ -75,10 +75,14 @@ CALCULATE(
 
 ## 📸 Capturas de Pantalla
 
-| Stack     | Screenshots                                                   |                                                                                                                                                  |                                                               |
-|:--------- |:------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| PowerBI   | ![powerbi](assets/screenshots/coffee_shop_sales-images-0.jpg) | ![powerbi](assets/screenshots/coffee_shop_sales-images-1.jpg)                                                                                    | ![powerbi](assets/screenshots/coffee_shop_sales-images-2.jpg) |
-| Streamlit | ![streamlit](https://i.imgur.com/BUEawevm.jpg)                | ![streamlit2](assets/screenshots/coffe_dashboard_streamlit_2.png) |                                                               |
+| Stack     | Screenshots                                                                                                                           |                                                                   |                                                               |
+|:--------- |:------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------- |
+| PowerBI   | ![powerbi](assets/screenshots/coffee_shop_sales-images-0.jpg)                                                                         | ![powerbi](assets/screenshots/coffee_shop_sales-images-1.jpg)     | ![powerbi](assets/screenshots/coffee_shop_sales-images-2.jpg) |
+| Streamlit | ![streamlit](https://i.imgur.com/BUEawevm.jpg)                                                                                        | ![streamlit2](assets/screenshots/coffe_dashboard_streamlit_2.png) |                                                               |
+| Dash      | ![dash](D:\Programacion\Python\ciencia_de_datos\viz\powerbi\coffee_shop_sales_analysis\assets\screenshots\coffe_dashboard_dash_1.jpg) | ![dash](assets/screenshots/coffe_dashboard_dash_2.jpg)            |                                                               |
+| Flask     |                                                                                                                                       |                                                                   |                                                               |
+| Flet      | ![flet](assets/screenshots/coffe_dashboard_flet_1.jpg)                                                                                | ![flet](assets/screenshots/coffe_dashboard_flet_2.jpg)            |                                                               |
+| React     | ![flet](assets/screenshots/coffe_dashboard_react_1.jpg)                                                                               |                                                                   |                                                               |
 
 url streamlit cloud: https://lcpallares-coffee-sales-multistac-streamlit-dashboardapp-mzdsea.streamlit.app/
 
