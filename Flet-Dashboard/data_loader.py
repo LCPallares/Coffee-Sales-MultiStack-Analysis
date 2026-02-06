@@ -140,8 +140,29 @@ class CoffeeDataLoader:
         
         return df_filtered
     
-    def get_time_period_data(self, period='last_30_days'):
-        """Obtiene datos para diferentes períodos de tiempo"""
+    def get_time_period_data(self, filters):
+        """Obtiene datos basados en filtros de año/mes"""
+        from datetime import datetime, timedelta
+        
+        if not self._is_valid_dataframe():
+            return pd.DataFrame()
+        
+        # Comenzar con todo el dataset
+        filtered_df = self.df.copy()
+        
+        # Filtrar por año
+        year = filters.get('year', 2023)
+        filtered_df = filtered_df[filtered_df['transaction_date'].dt.year == year]
+        
+        # Filtrar por meses
+        months = filters.get('months', ['all'])
+        if 'all' not in months and months:
+            filtered_df = filtered_df[filtered_df['transaction_date'].dt.month.isin(months)]
+        
+        return filtered_df
+    
+    def get_time_period_data_legacy(self, period='last_30_days'):
+        """Método legacy para períodos relativos (mantenido por compatibilidad)"""
         from datetime import datetime, timedelta
         
         if not self._is_valid_dataframe():

@@ -1,5 +1,6 @@
 # pages/dashboard.py
 import flet as ft
+import pandas as pd
 from config import COLORS
 from components.cards import MetricCard, SalesChartCard, CategoryCard, RecentTransactionsCard
 from components.filters import FilterPanel
@@ -29,21 +30,8 @@ class DashboardPage:
     
     def _apply_filters(self):
         """Aplica los filtros actuales a los datos"""
-        # Convertir filtros a formato para data_loader
-        period_map = {
-            'Hoy': 'today',
-            'Últimos 7 días': 'last_7_days',
-            'Últimos 30 días': 'last_30_days',
-            'Últimos 90 días': 'last_90_days',
-            'Este mes': 'this_month',
-            'Mes anterior': 'last_month',
-            'Todo': 'all_time'
-        }
-        
-        period = period_map.get(self.current_filters.get('period', 'Últimos 30 días'), 'last_30_days')
-        
-        # Obtener datos filtrados
-        filtered_df = self.data_loader.get_time_period_data(period)
+        # Obtener datos filtrados usando la nueva estructura
+        filtered_df = self.data_loader.get_time_period_data(self.current_filters)
         
         # Aplicar filtro de tienda
         store = self.current_filters.get('store', 'Todos')
@@ -63,15 +51,24 @@ class DashboardPage:
         filtered_df = self._apply_filters()
         
         # Calcular métricas desde datos filtrados
-        total_revenue = filtered_df['revenue'].sum()
-        total_transactions = len(filtered_df)
-        avg_transaction = filtered_df['Total_Bill'].mean() if not filtered_df.empty else 0
-        unique_products = filtered_df['product_id'].nunique()
-        
-        # Obtener datos para gráficos
-        daily_sales = filtered_df.groupby('transaction_date')['revenue'].sum().reset_index()
-        category_sales = filtered_df.groupby('product_category')['revenue'].sum().reset_index()
-        recent_transactions = filtered_df.sort_values('transaction_datetime', ascending=False).head(5)
+        if filtered_df.empty:
+            total_revenue = 0
+            total_transactions = 0
+            avg_transaction = 0
+            unique_products = 0
+            daily_sales = pd.DataFrame()
+            category_sales = pd.DataFrame()
+            recent_transactions = pd.DataFrame()
+        else:
+            total_revenue = filtered_df['revenue'].sum()
+            total_transactions = len(filtered_df)
+            avg_transaction = filtered_df['Total_Bill'].mean()
+            unique_products = filtered_df['product_id'].nunique()
+            
+            # Obtener datos para gráficos
+            daily_sales = filtered_df.groupby('transaction_date')['revenue'].sum().reset_index()
+            category_sales = filtered_df.groupby('product_category')['revenue'].sum().reset_index()
+            recent_transactions = filtered_df.sort_values('transaction_datetime', ascending=False).head(5)
         
         # Preparar datos para gráficos
         last_7_days = daily_sales.tail(7)
