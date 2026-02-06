@@ -51,14 +51,26 @@ class CoffeeShopDashboard:
             
             # Contenido principal
             ft.Column([
-                # Header
+                # Header estático (no se mueve con scroll)
                 self.header.build(),
                 
-                # Área de contenido
-                ft.Container(
-                    ref=self.content_area,
-                    content=self.pages["dashboard"].build(),
+                # Área de contenido CON SCROLL
+                ft.Column(
+                    controls=[
+                        # self.header.build(),
+                        # Header estático eliminado - solo existe el header principal fuera del scroll
+                        # El header estático está arriba, este era duplicado y se movía con scroll
+                        
+                        # Área de contenido
+                        ft.Container(
+                            ref=self.content_area,
+                            content=self.pages["dashboard"].build(),
+                            expand=True,
+                        )
+                    ],
+                    scroll=ft.ScrollMode.AUTO,
                     expand=True,
+                    spacing=0
                 )
             ], expand=True, spacing=0)
         ], expand=True, spacing=0)
