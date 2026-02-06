@@ -19,12 +19,12 @@ class CoffeeShopDashboard:
         self.content_area = ft.Ref[ft.Container]()
         self.header = Header("Dashboard")
         
-        # Inicializar páginas
+        # Inicializar páginas con callbacks
         self.pages = {
-            "dashboard": DashboardPage(self.data_loader),
+            "dashboard": DashboardPage(self.data_loader, self.on_dashboard_filter_change),
             "sales": SalesPage(self.data_loader),
             "products": ProductsPage(self.data_loader),
-            "analytics": AnalyticsPage(self.data_loader),  # Similar a las otras
+            "analytics": AnalyticsPage(self.data_loader),
         }
         
         # Barra lateral
@@ -32,7 +32,7 @@ class CoffeeShopDashboard:
         
         # Construir interfaz
         self.build_ui()
-    
+
     def setup_page(self):
         """Configura la página principal"""
         self.page.title = "Coffee Shop Analytics"
@@ -65,12 +65,22 @@ class CoffeeShopDashboard:
         
         self.page.add(layout)
     
+    def on_dashboard_filter_change(self, filters):
+        """Callback para cambios en filtros del dashboard"""
+        print(f"Filtros actualizados: {filters}")
+        # Aquí podrías actualizar otras páginas si es necesario
+    
     def change_page(self, page_id: str):
         """Cambia la página actual"""
         if page_id in self.pages:
             self.header.update_title(PAGES[page_id])
-            self.content_area.current.content = self.pages[page_id].build()
-            self.sidebar.current_page = page_id
+            
+            # Obtener la página y asignarle referencia a la página principal
+            page_instance = self.pages[page_id]
+            if hasattr(page_instance, 'page'):
+                page_instance.page = self.page
+            
+            self.content_area.current.content = page_instance.build()
             self.page.update()
 
 def main(page: ft.Page):

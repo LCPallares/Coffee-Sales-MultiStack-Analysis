@@ -206,7 +206,7 @@ class CategoryCard:
 
 class RecentTransactionsCard:
     @staticmethod
-    def create(transactions: list) -> ft.Container:
+    def create(transactions: list, on_view_all=None) -> ft.Container:
         """Crea una tarjeta con transacciones recientes"""
         rows = []
         
@@ -224,25 +224,30 @@ class RecentTransactionsCard:
                         ], horizontal_alignment=ft.CrossAxisAlignment.END)
                     ]),
                     padding=10,
-                    bgcolor=ft.Colors.WHITE if i % 2 == 0 else ft.Colors.GREY_50,
-                    border_radius=5
+                    bgcolor=ft.Colors.WHITE if i % 2 == 0 else ft.Colors.GREY_200,
+                    border_radius=5,
+                    on_click=lambda e, t=trans: print(f"Click en transacción: {t.get('transaction_id')}")
                 )
             )
+        
+        # Botón con callback
+        view_all_button = ft.ElevatedButton(
+            "Ver Todas",
+            icon=ft.Icons.LIST,
+            style=ft.ButtonStyle(
+                bgcolor=COLORS["primary"],
+                color=ft.Colors.WHITE,
+                padding=ft.padding.symmetric(horizontal=15, vertical=5)
+            ),
+            on_click=on_view_all if on_view_all else (lambda e: print("Ver todas las transacciones"))
+        )
         
         return ft.Container(
             content=ft.Column([
                 ft.Row([
                     ft.Text("Transacciones Recientes", size=18, weight=ft.FontWeight.BOLD),
                     ft.Container(expand=True),
-                    ft.ElevatedButton(
-                        "Ver Todas",
-                        icon=ft.Icons.LIST,
-                        style=ft.ButtonStyle(
-                            bgcolor=COLORS["primary"],
-                            color=ft.Colors.WHITE,
-                            padding=ft.padding.symmetric(horizontal=15, vertical=5)
-                        )
-                    )
+                    view_all_button
                 ]),
                 ft.Divider(height=20),
                 *rows

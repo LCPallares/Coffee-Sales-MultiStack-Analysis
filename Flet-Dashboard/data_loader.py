@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
-import os
 
 class CoffeeDataLoader:
     def __init__(self, filepath: str = "coffee_shop_sales.csv"):
@@ -14,8 +13,6 @@ class CoffeeDataLoader:
     def load_data(self):
         """Carga y preprocesa los datos del CSV"""
         try:
-            #self.base_path = os.path.dirname(__file__)
-            #self.file_path = os.path.join(self.base_path, "..", "Data", "coffee_shop_sales.csv")
             self.df = pd.read_csv(self.filepath)
             self._preprocess_data()
             print(f"Datos cargados: {len(self.df)} registros")
@@ -105,3 +102,63 @@ class CoffeeDataLoader:
         if self.df.empty:
             return pd.DataFrame()
         return self.df.sort_values('transaction_datetime', ascending=False).head(n)
+
+    def filter_data(self, 
+                   start_date=None, 
+                   end_date=None,
+                   store_ids=None,
+                   categories=None,
+                   min_price=0,
+                   max_price=None) -> pd.DataFrame:
+        """Filtra los datos según criterios"""
+        df_filtered = self.df.copy()
+        
+        # Filtrar por fecha
+        if start_date:
+            df_filtered = df_filtered[df_filtered['transaction_date'] >= start_date]
+        if end_date:
+            df_filtered = df_filtered[df_filtered['transaction_date'] <= end_date]
+        
+        # Filtrar por tienda
+        if store_ids:
+            df_filtered = df_filtered[df_filtered['store_id'].isin(store_ids)]
+        
+        # Filtrar por categoría
+        if categories:
+            df_filtered = df_filtered[df_filtered['product_category'].isin(categories)]
+        
+        # Filtrar por precio
+        df_filtered = df_filtered[df_filtered['unit_price'] >= min_price]
+        if max_price:
+            df_filtered = df_filtered[df_filtered['unit_price'] <= max_price]
+        
+        return df_filtered
+    
+    def get_time_period_data(self, period='last_30_days'):
+        """Obtiene datos para diferentes períodos de tiempo"""
+        from datetime import datetime, timedelta
+        
+        end_date = self.df['transaction_date'].max()
+        
+        if period == 'today':
+            start_date = end_date
+        elif period == 'last_7_days':
+            start_date = end_date - timedelta(days=7)
+        elif period == 'last_30_days':
+            start_date = end_date - timedelta(days=30)
+        elif period == 'last_90_days':
+            start_date = end_date - timedelta(days=90)
+        elif period == 'this_month':
+            start_date = end_date.replace(day=1)
+        elif period == 'last_month':
+            start_date = (end_date.replace(day=1) - timedelta(days=1)).replace(day=1)
+            end_date = end_date.replace(day=1) - timedelta(days=1)
+        else:
+            start_date = self.df['transaction_date'].min()
+        
+        return self.filter_data(start_date=start_date, end_date=end_date)
+    
+    def get_unique_values(self, column):
+        """Obtiene valores únicos de una columna"""
+        return sorted(self.df[column].dropna().unique().tolist())
+
