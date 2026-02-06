@@ -22,11 +22,10 @@ class CoffeeDataLoader:
     
     def _preprocess_data(self):
         """Preprocesa los datos para análisis"""
-        if self.df.empty:
+        if self.df is None or self.df.empty:
             return
             
         # Convertir fechas y horas
-        #self.df['transaction_date'] = pd.to_datetime(self.df['transaction_date'])
         self.df['transaction_date'] = pd.to_datetime(self.df['transaction_date'], dayfirst=True)
         self.df['transaction_time'] = pd.to_datetime(self.df['transaction_time'], format='%H:%M:%S').dt.time
         self.df['transaction_datetime'] = pd.to_datetime(
@@ -43,17 +42,21 @@ class CoffeeDataLoader:
         # Calcular ingresos totales por transacción
         self.df['revenue'] = self.df['transaction_qty'] * self.df['unit_price']
     
+    def _is_valid_dataframe(self):
+        """Verifica si el DataFrame es válido para operaciones"""
+        return self.df is not None and not self.df.empty
+    
     def get_summary_stats(self) -> Dict:
         """Obtiene estadísticas resumen"""
-        if self.df.empty:
+        if not self._is_valid_dataframe():
             return {}
             
         return {
             'total_transactions': len(self.df),
-            'total_revenue': self.df['revenue'].sum(),
-            'avg_transaction_value': self.df['Total_Bill'].mean(),
-            'unique_customers': self.df['transaction_id'].nunique(),
-            'unique_products': self.df['product_id'].nunique(),
+            'total_revenue': float(self.df['revenue'].sum()),
+            'avg_transaction_value': float(self.df['Total_Bill'].mean()),
+            'unique_customers': int(self.df['transaction_id'].nunique()),
+            'unique_products': int(self.df['product_id'].nunique()),
             'date_range': {
                 'start': self.df['transaction_date'].min(),
                 'end': self.df['transaction_date'].max()
@@ -62,13 +65,13 @@ class CoffeeDataLoader:
     
     def get_daily_sales(self) -> pd.DataFrame:
         """Obtiene ventas diarias"""
-        if self.df.empty:
+        if not self._is_valid_dataframe():
             return pd.DataFrame()
         return self.df.groupby('transaction_date')['revenue'].sum().reset_index()
     
     def get_top_products(self, n: int = 10) -> pd.DataFrame:
         """Obtiene los productos más vendidos"""
-        if self.df.empty:
+        if not self._is_valid_dataframe():
             return pd.DataFrame()
         return self.df.groupby(['product_category', 'product_type', 'product_detail']).agg({
             'transaction_qty': 'sum',
@@ -77,7 +80,7 @@ class CoffeeDataLoader:
     
     def get_store_performance(self) -> pd.DataFrame:
         """Obtiene rendimiento por tienda"""
-        if self.df.empty:
+        if not self._is_valid_dataframe():
             return pd.DataFrame()
         return self.df.groupby(['store_id', 'store_location']).agg({
             'transaction_id': 'count',
@@ -87,19 +90,19 @@ class CoffeeDataLoader:
     
     def get_hourly_sales(self) -> pd.DataFrame:
         """Obtiene ventas por hora del día"""
-        if self.df.empty:
+        if not self._is_valid_dataframe():
             return pd.DataFrame()
         return self.df.groupby('hour')['revenue'].sum().reset_index()
     
     def get_category_sales(self) -> pd.DataFrame:
         """Obtiene ventas por categoría"""
-        if self.df.empty:
+        if not self._is_valid_dataframe():
             return pd.DataFrame()
         return self.df.groupby('product_category')['revenue'].sum().reset_index()
     
     def get_recent_transactions(self, n: int = 10) -> pd.DataFrame:
         """Obtiene transacciones recientes"""
-        if self.df.empty:
+        if not self._is_valid_dataframe():
             return pd.DataFrame()
         return self.df.sort_values('transaction_datetime', ascending=False).head(n)
 
@@ -111,6 +114,9 @@ class CoffeeDataLoader:
                    min_price=0,
                    max_price=None) -> pd.DataFrame:
         """Filtra los datos según criterios"""
+        if not self._is_valid_dataframe():
+            return pd.DataFrame()
+            
         df_filtered = self.df.copy()
         
         # Filtrar por fecha
@@ -138,6 +144,9 @@ class CoffeeDataLoader:
         """Obtiene datos para diferentes períodos de tiempo"""
         from datetime import datetime, timedelta
         
+        if not self._is_valid_dataframe():
+            return pd.DataFrame()
+        
         end_date = self.df['transaction_date'].max()
         
         if period == 'today':
@@ -151,8 +160,14 @@ class CoffeeDataLoader:
         elif period == 'this_month':
             start_date = end_date.replace(day=1)
         elif period == 'last_month':
-            start_date = (end_date.replace(day=1) - timedelta(days=1)).replace(day=1)
-            end_date = end_date.replace(day=1) - timedelta(days=1)
+            if end_date.day > 1:
+                start_date = (end_date.replace(day=1) - timedelta(days=1)).replace(day=1)
+                end_date = end_date.replace(day=1) - timedelta(days=1)
+            else:
+                start_date = end_date.replace(day=1)
+                end_date = end_date.replace(day=1)
+        elif period == 'all_time':
+            start_date = self.df['transaction_date'].min()
         else:
             start_date = self.df['transaction_date'].min()
         
@@ -160,5 +175,7 @@ class CoffeeDataLoader:
     
     def get_unique_values(self, column):
         """Obtiene valores únicos de una columna"""
+        if not self._is_valid_dataframe() or column not in self.df.columns:
+            return []
         return sorted(self.df[column].dropna().unique().tolist())
 

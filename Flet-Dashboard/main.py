@@ -21,7 +21,7 @@ class CoffeeShopDashboard:
         
         # Inicializar páginas con callbacks
         self.pages = {
-            "dashboard": DashboardPage(self.data_loader, self.on_dashboard_filter_change),
+            "dashboard": DashboardPage(self.data_loader, self.page, self.on_dashboard_filter_change),
             "sales": SalesPage(self.data_loader),
             "products": ProductsPage(self.data_loader),
             "analytics": AnalyticsPage(self.data_loader),

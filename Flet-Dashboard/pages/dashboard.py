@@ -5,8 +5,9 @@ from components.cards import MetricCard, SalesChartCard, CategoryCard, RecentTra
 from components.filters import FilterPanel
 
 class DashboardPage:
-    def __init__(self, data_loader, on_filter_change=None):
+    def __init__(self, data_loader, page=None, on_filter_change=None):
         self.data_loader = data_loader
+        self.page = page
         self.on_filter_change = on_filter_change or (lambda x: None)
         self.current_filters = {}
         
@@ -23,7 +24,7 @@ class DashboardPage:
         """Actualiza el contenido con los filtros actuales"""
         if self.content_container.current:
             self.content_container.current.content = self._build_content()
-            if hasattr(self, 'page'):
+            if hasattr(self, 'page') and self.page:
                 self.page.update()
     
     def _apply_filters(self):
