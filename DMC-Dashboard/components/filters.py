@@ -27,6 +27,11 @@ def create_filters(df):
     categories = sorted(df['product_category'].unique().tolist())
     products = sorted(df['product_detail'].unique().tolist())
     
+    # Get months from data
+    months_in_data = sorted(df['Month Name'].unique().tolist(), 
+                           key=lambda x: ['January', 'February', 'March', 'April', 'May', 'June',
+                                         'July', 'August', 'September', 'October', 'November', 'December'].index(x))
+    
     # Get date range
     min_date = df['transaction_date'].min()
     max_date = df['transaction_date'].max()
@@ -106,6 +111,41 @@ def create_filters(df):
                                     ],
                                     minDate=min_date.strftime('%Y-%m-%d'),
                                     maxDate=max_date.strftime('%Y-%m-%d'),
+                                    style={"width": "100%"}
+                                )
+                            ]
+                        )
+                    ),
+                    
+                    # Month Filter
+                    dmc.GridCol(
+                        span={"base": 12, "sm": 6, "md": 3},
+                        children=dmc.Stack(
+                            gap="xs",
+                            children=[
+                                dmc.Group(
+                                    gap="xs",
+                                    children=[
+                                        DashIconify(
+                                            icon="tabler:calendar-month",
+                                            width=18,
+                                            color="#8B4513"
+                                        ),
+                                        dmc.Text(
+                                            "Month",
+                                            size="sm",
+                                            fw=600,
+                                            style={"fontFamily": "Space Mono, monospace"}
+                                        )
+                                    ]
+                                ),
+                                dmc.MultiSelect(
+                                    id="month-filter",
+                                    data=months_in_data,
+                                    placeholder="All months",
+                                    searchable=True,
+                                    clearable=True,
+                                    leftSection=DashIconify(icon="tabler:calendar-stats", width=16),
                                     style={"width": "100%"}
                                 )
                             ]

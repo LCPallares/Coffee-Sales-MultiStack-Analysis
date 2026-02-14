@@ -214,12 +214,13 @@ app.layout = dmc.MantineProvider(
     ],
     [
         Input("date-range", "value"),
+        Input("month-filter", "value"),
         Input("store-filter", "value"),
         Input("category-filter", "value"),
         Input("product-filter", "value")
     ]
 )
-def update_dashboard(date_range, stores, categories, products):
+def update_dashboard(date_range, months, stores, categories, products):
     """Update all dashboard components based on filters"""
     
     # Filter data
@@ -232,6 +233,9 @@ def update_dashboard(date_range, stores, categories, products):
             (filtered_df['transaction_date'] >= start_date) &
             (filtered_df['transaction_date'] <= end_date)
         ]
+    
+    if months:
+        filtered_df = filtered_df[filtered_df['Month Name'].isin(months)]
     
     if stores:
         filtered_df = filtered_df[filtered_df['store_location'].isin(stores)]
