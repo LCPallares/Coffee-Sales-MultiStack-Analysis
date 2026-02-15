@@ -21,7 +21,23 @@ from components.charts import (
     create_hourly_heatmap,
     create_top_products,
     create_store_comparison,
-    create_weekday_analysis
+    create_weekday_analysis,
+
+    create_size_distribution,  # ← NUEVO
+
+    # New charts from Streamlit
+    create_monthly_trend,
+    create_daily_sales_bar,
+    create_category_comparison,
+    create_category_variation,
+    create_heatmap_with_totals,
+    create_price_transaction_analysis,
+    create_category_price_qty_quadrants,
+    create_top_products_detailed,
+    create_time_distribution,
+    create_ticket_distribution,
+    create_day_distribution,
+    create_temporal_evolution
 )
 from utils.data_loader import load_and_prepare_data
 from utils.theme import get_theme
@@ -190,7 +206,20 @@ app.layout = dmc.MantineProvider(
                                         withBorder=True,
                                         children=html.Div(id="weekday-chart")
                                     )
-                                )
+                                ),
+
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="size-chart")
+                                    )
+                                ),
+
+
+
                             ]
                         )
                     ]
@@ -210,7 +239,10 @@ app.layout = dmc.MantineProvider(
         Output("top-products-chart", "children"),
         Output("heatmap-chart", "children"),
         Output("store-chart", "children"),
-        Output("weekday-chart", "children")
+        Output("weekday-chart", "children"),
+
+        Output("size-chart", "children")  # ← NUEVO
+
     ],
     [
         Input("date-range", "value"),
@@ -254,7 +286,8 @@ def update_dashboard(date_range, months, stores, categories, products):
         create_top_products(filtered_df),
         create_hourly_heatmap(filtered_df),
         create_store_comparison(filtered_df),
-        create_weekday_analysis(filtered_df)
+        create_weekday_analysis(filtered_df),
+        create_size_distribution(filtered_df)  # ← NUEVO
     )
 
 if __name__ == '__main__':
