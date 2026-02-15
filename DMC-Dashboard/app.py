@@ -218,6 +218,122 @@ app.layout = dmc.MantineProvider(
                                     )
                                 ),
 
+                                # from streamlit charts
+
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="monthly_trend")
+                                    )
+                                ),
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="daily_sales_bar")
+                                    )
+                                ),
+
+                                # dmc.GridCol(
+                                #     span={"base": 12, "md": 6},
+                                #     children=dmc.Paper(
+                                #         shadow="sm",
+                                #         p="md",
+                                #         withBorder=True,
+                                #         children=html.Div(id="category_comparison")
+                                #     )
+                                # ),
+                                # dmc.GridCol(
+                                #     span={"base": 12, "md": 6},
+                                #     children=dmc.Paper(
+                                #         shadow="sm",
+                                #         p="md",
+                                #         withBorder=True,
+                                #         children=html.Div(id="category_variation")
+                                #     )
+                                # ),
+
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="heatmap_with_totals")
+                                    )
+                                ),
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="price_transaction_analysis")
+                                    )
+                                ),
+
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="category_price_qty_quadrants")
+                                    )
+                                ),
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="top_products_detailed")
+                                    )
+                                ),
+
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="time_distribution")
+                                    )
+                                ),
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="ticket_distribution")
+                                    )
+                                ),
+
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="day_distribution")
+                                    )
+                                ),
+                                dmc.GridCol(
+                                    span={"base": 12, "md": 6},
+                                    children=dmc.Paper(
+                                        shadow="sm",
+                                        p="md",
+                                        withBorder=True,
+                                        children=html.Div(id="temporal_evolution")
+                                    )
+                                )
+
 
 
                             ]
@@ -241,7 +357,20 @@ app.layout = dmc.MantineProvider(
         Output("store-chart", "children"),
         Output("weekday-chart", "children"),
 
-        Output("size-chart", "children")  # ← NUEVO
+        Output("size-chart", "children"),  # ← NUEVO
+
+        Output("monthly_trend", "children"),
+        Output("daily_sales_bar", "children"),
+        # Output("category_comparison", "children"),
+        # Output("category_variation", "children"),
+        Output("heatmap_with_totals", "children"),
+        Output("price_transaction_analysis", "children"),
+        Output("category_price_qty_quadrants", "children"),
+        Output("top_products_detailed", "children"),
+        Output("time_distribution", "children"),
+        Output("ticket_distribution", "children"),
+        Output("day_distribution", "children"),
+        Output("temporal_evolution", "children")
 
     ],
     [
@@ -287,7 +416,22 @@ def update_dashboard(date_range, months, stores, categories, products):
         create_hourly_heatmap(filtered_df),
         create_store_comparison(filtered_df),
         create_weekday_analysis(filtered_df),
-        create_size_distribution(filtered_df)  # ← NUEVO
+
+        create_size_distribution(filtered_df),  # ← NUEVO
+
+        create_monthly_trend(filtered_df),
+        create_daily_sales_bar(filtered_df),
+        # create_category_comparison(filtered_df),
+        # create_category_variation(filtered_df),
+        create_heatmap_with_totals(filtered_df),
+        create_price_transaction_analysis(filtered_df),
+        create_category_price_qty_quadrants(filtered_df),
+        create_top_products_detailed(filtered_df),
+        create_time_distribution(filtered_df),
+        create_ticket_distribution(filtered_df),
+        create_day_distribution(filtered_df),
+        create_temporal_evolution(filtered_df)
+
     )
 
 if __name__ == '__main__':

@@ -31,6 +31,8 @@ def load_and_prepare_data(filepath):
         format='mixed',
         dayfirst=True
     )
+
+    df['Day'] = df['transaction_date'].dt.day
     
     # Convert time to datetime for easier manipulation
     df['transaction_time'] = pd.to_datetime(
