@@ -102,16 +102,18 @@ def create_filters(df):
                                         )
                                     ]
                                 ),
-                                dmc.DatePicker(
+                                dmc.DatePickerInput(
                                     id="date-range",
                                     type="range",
+                                    # dropdownOpened=False,  # Por defecto ya inicia cerrado
                                     value=[
                                         min_date.strftime('%Y-%m-%d'),
                                         max_date.strftime('%Y-%m-%d')
                                     ],
                                     minDate=min_date.strftime('%Y-%m-%d'),
                                     maxDate=max_date.strftime('%Y-%m-%d'),
-                                    style={"width": "100%"}
+                                    style={"width": "100%"},
+                                    # clearable=True, # Opcional: permite limpiar la fecha
                                 )
                             ]
                         )
